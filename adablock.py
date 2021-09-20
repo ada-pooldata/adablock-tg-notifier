@@ -32,7 +32,6 @@ def block_alarm(context: CallbackContext) -> None:
     print(CONFIG["cnclidb_path"])
     con = sqlite3.connect(CONFIG["cnclidb_path"])
     query_result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 1 ").fetchall()
-    message = ""
 
     for slot in ast.literal_eval(query_result[0][2]):
         slot_time_sec = 1596491091 + (slot - 4924800)
@@ -40,12 +39,11 @@ def block_alarm(context: CallbackContext) -> None:
         slot_datestring = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
         slot_timediff =  slot_datetime - datetime.now()
         slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
-        slot_stringdiff = ("{0}m {1}s").format(slot_minutesdiff[0],slot_minutesdiff[1])
-        if slot_minutesdiff[0] > 0 and slot_minutesdiff[0] <= 240:
-            message = message + "LEADERLOG | slot scheduled on {0} | countdown: {1} %0A".format(slot_datestring, slot_stringdiff)
+        slot_stringdiff = ("{0}m {1}s").format(str(round(slot_minutesdiff[0])).rstrip('0').rstrip('.'),str(round(slot_minutesdiff[1])).rstrip('0').rstrip('.'))
 
-    if message != "":
-        context.bot.send_message(job.context, text=message)
+        if slot_minutesdiff[0] > 0 and slot_minutesdiff[0] <= 240:
+            message = "LEADERLOG \n slot scheduled on {0} \n countdown: {1}".format(slot_datestring, slot_stringdiff)
+            context.bot.send_message(job.context, text=message)
 
     con.close()
 
