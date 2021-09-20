@@ -41,7 +41,7 @@ def block_alarm(context: CallbackContext) -> None:
         slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
         slot_stringdiff = ("{0}m {1}s").format(slot_minutesdiff[0],slot_minutesdiff[1])
 
-        if slot_minutesdiff > 0 and slot_minutesdiff[0] <= 240:
+        if slot_minutesdiff[0] > 0 and slot_minutesdiff[0] <= 240:
             context.bot.send_message(job.context, text="LEADERLOG | slot scheduled on {0} | countdown: {1}".format(slot_datestring, slot_stringdiff))
 
     con.close()
