@@ -32,6 +32,7 @@ def block_alarm(context: CallbackContext) -> None:
     print(CONFIG["cnclidb_path"])
     con = sqlite3.connect(CONFIG["cnclidb_path"])
     query_result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 1 ").fetchall()
+    message = ""
 
     for slot in ast.literal_eval(query_result[0][2]):
         slot_time_sec = 1596491091 + (slot - 4924800)
@@ -40,10 +41,12 @@ def block_alarm(context: CallbackContext) -> None:
         slot_timediff =  slot_datetime - datetime.now()
         slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
         slot_stringdiff = ("{0}m {1}s").format(slot_minutesdiff[0],slot_minutesdiff[1])
-
         if slot_minutesdiff[0] > 0 and slot_minutesdiff[0] <= 240:
-            context.bot.send_message(job.context, text="LEADERLOG | slot scheduled on {0} | countdown: {1}".format(slot_datestring, slot_stringdiff))
+            message = message + "LEADERLOG | slot scheduled on {0} | countdown: {1} %0A".format(slot_datestring, slot_stringdiff)
 
+    if message != "":
+        context.bot.send_message(job.context, text=message)
+        
     con.close()
 
 def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
@@ -60,6 +63,9 @@ def set_timer(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     try:
         job_removed = remove_job_if_exists(str(chat_id), context)
+        #run once immediatly to evaluate any block coming up soon
+        context.job_queue.run_once(block_alarm, 3600, context=chat_id, name=str(chat_id))
+        #run repeating job every hour
         context.job_queue.run_repeating(block_alarm, 3600, context=chat_id, name=str(chat_id))
         text = 'Block minting notification activated!'
         update.message.reply_text(text)
