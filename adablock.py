@@ -46,7 +46,7 @@ def block_alarm(context: CallbackContext) -> None:
 
     if message != "":
         context.bot.send_message(job.context, text=message)
-        
+
     con.close()
 
 def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
@@ -64,7 +64,7 @@ def set_timer(update: Update, context: CallbackContext) -> None:
     try:
         job_removed = remove_job_if_exists(str(chat_id), context)
         #run once immediatly to evaluate any block coming up soon
-        context.job_queue.run_once(block_alarm, 3600, context=chat_id, name=str(chat_id))
+        context.job_queue.run_once(block_alarm, 5, context=chat_id, name=str(chat_id))
         #run repeating job every hour
         context.job_queue.run_repeating(block_alarm, 3600, context=chat_id, name=str(chat_id))
         text = 'Block minting notification activated!'
