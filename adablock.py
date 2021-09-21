@@ -25,6 +25,12 @@ logger = logging.getLogger(__name__)
 logger.addHandler(handler)
 logger.setLevel(logging.DEBUG)
 
+def check_notification_range(minute_diff):
+    for m in CONFIG["notification_minutes"]:
+        if minute_diff >= m-1 and minute_diff < m:
+            return True
+    return False
+
 # block notification logics
 def block_alarm(context: CallbackContext) -> None:
     """Send the alarm message."""
@@ -33,20 +39,16 @@ def block_alarm(context: CallbackContext) -> None:
     query_result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 2 ").fetchall() # pick last 2 epochs
 
     for row in query_result:
-        for slot in ast.literal_eval(row[2]): 
-            slot_time_sec = 1596491091 + (slot - 4924800)
+        for slot in ast.literal_eval(row[2]):
+            slot_time_sec = 1596491091 + (slot - 4924800) #convert slot# to timestamp in seconds
             slot_datetime = datetime.fromtimestamp(slot_time_sec)
             slot_datestring = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
             slot_timediff =  slot_datetime - datetime.now()
             slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
             slot_stringdiff = str(slot_timediff)
 
-            if (slot_minutesdiff[0] >= 59 and slot_minutesdiff[0] < 60) or (slot_minutesdiff[0] >= 119 and slot_minutesdiff[0] < 120) or (slot_minutesdiff[0] >= 29 and slot_minutesdiff[0] < 30):
-                message = "LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
-                context.bot.send_message(job.context, text=message)
-            
-            if (slot_minutesdiff[0] >= 1 and slot_minutesdiff[0] < 2):
-                message = "LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+            if check_notification_range(slot_minutesdiff[0]):
+                message = "LEADERLOG - slot: {0} \n- slot scheduled on {1} \n- countdown: {2}".format(str(slot), slot_datestring, slot_stringdiff)
                 context.bot.send_message(job.context, text=message)
 
     con.close()
@@ -101,7 +103,7 @@ def leaderlog(update: Update, context: CallbackContext) -> None:
 def nextslot(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     con = sqlite3.connect(CONFIG["cnclidb_path"])
-    result = con.execute("select slots from slots order by epoch desc limit 2 ").fetchall()
+    result = con.execute("select slots from slots order by epoch desc limit 2").fetchall() # always check 2 epochs in case leaderlog already ran
     slot_list = []
     for row in result:
         slot_list = slot_list + ast.literal_eval(row[0])
@@ -113,8 +115,9 @@ def nextslot(update: Update, context: CallbackContext) -> None:
         if slot_timediff.total_seconds() < 0:
             continue
         if slot_timediff.total_seconds() > 0:
-            slot_datetime_str = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
-            update.message.reply_text("Next Slot Scheduled: #" + str(slot) + "\n- on: " + slot_datetime_str +"\n- countdown: " + str(slot_timediff) )
+            update.message.reply_text("Next Slot Scheduled: #" + str(slot) / 
+                + "\n- on: " + slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S") / 
+                + "\n- countdown: " + str(slot_timediff))
             break
 
     con.close()
@@ -143,7 +146,7 @@ def main() -> None:
     # Setup the Bot
     token = CONFIG["tgbot_token"]
     updater = Updater(token)
-    restore_notifications(updater)
+    restore_notifications(updater) # restore existing user notification settings
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("enable", enable_notifications))
     dispatcher.add_handler(CommandHandler("start", enable_notifications))
