@@ -42,11 +42,11 @@ def block_alarm(context: CallbackContext) -> None:
             slot_stringdiff = str(slot_timediff)
 
             if (slot_minutesdiff[0] >= 59 and slot_minutesdiff[0] < 60) or (slot_minutesdiff[0] >= 119 and slot_minutesdiff[0] < 120) or (slot_minutesdiff[0] >= 29 and slot_minutesdiff[0] < 30):
-                message = "\xF0\x9F\x8E\xBA LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+                message = "LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
                 context.bot.send_message(job.context, text=message)
             
             if (slot_minutesdiff[0] >= 1 and slot_minutesdiff[0] < 2):
-                message = "\xF0\x9F\x8E\xAF LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+                message = "LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
                 context.bot.send_message(job.context, text=message)
 
     con.close()
@@ -114,7 +114,7 @@ def nextslot(update: Update, context: CallbackContext) -> None:
             continue
         if slot_timediff.total_seconds() > 0:
             slot_datetime_str = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
-            update.message.reply_text("\u1F3BA Next Slot Scheduled: #" + str(slot) + "\n - on: " + slot_datetime_str +"\n- countdown: " + str(slot_timediff) )
+            update.message.reply_text("Next Slot Scheduled: #" + str(slot) + "\n - on: " + slot_datetime_str +"\n- countdown: " + str(slot_timediff) )
             break
 
     con.close()
