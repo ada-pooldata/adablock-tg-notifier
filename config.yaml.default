@@ -1,3 +1,4 @@
+localdb_path: "adablock.db"
 cnclidb_path: "cncli.db"
 tgbot_token: "your-telegram:token-here"
 log_path: "adablock-tg-notifier.log"

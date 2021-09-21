@@ -14,40 +14,40 @@ from datetime import datetime
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.yaml")
 
-##### LOAD CONFIGURATION #####
+# Load Configuration
 CONFIG = yaml.load(open(CONFIG_PATH), Loader=yaml.FullLoader)
 
-# Enable logging
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-log_handler = TimedRotatingFileHandler(CONFIG['log_path'], when='midnight', backupCount=10)
+# Setup logging
+formatter = logging.Formatter(f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+handler = TimedRotatingFileHandler(CONFIG['log_path'], when='midnight', backupCount=10)
+handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
-logger.addHandler(log_handler)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
-# This being an example and not having context present confusing beginners,
-# we decided to have it present as context.
-
+# block notification logics
 def block_alarm(context: CallbackContext) -> None:
     """Send the alarm message."""
     job = context.job
-    print(CONFIG["cnclidb_path"])
     con = sqlite3.connect(CONFIG["cnclidb_path"])
-    query_result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 1 ").fetchall()
+    query_result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 2 ").fetchall() # pick last 2 epochs
 
-    for slot in ast.literal_eval(query_result[0][2]):
-        slot_time_sec = 1596491091 + (slot - 4924800)
-        slot_datetime = datetime.fromtimestamp(slot_time_sec)
-        slot_datestring = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
-        slot_timediff =  slot_datetime - datetime.now()
-        slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
-        slot_stringdiff = ("{0}m {1}s").format(str(round(slot_minutesdiff[0])).rstrip('0').rstrip('.'),str(round(slot_minutesdiff[1])).rstrip('0').rstrip('.'))
+    for row in query_result:
+        for slot in ast.literal_eval(row[2]): 
+            slot_time_sec = 1596491091 + (slot - 4924800)
+            slot_datetime = datetime.fromtimestamp(slot_time_sec)
+            slot_datestring = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
+            slot_timediff =  slot_datetime - datetime.now()
+            slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
+            slot_stringdiff = ("{0}m {1}s").format(str(round(slot_minutesdiff[0])).rstrip('0').rstrip('.'),str(round(slot_minutesdiff[1])).rstrip('0').rstrip('.'))
 
-        if (slot_minutesdiff[0] >= 59 and slot_minutesdiff[0] < 60) or (slot_minutesdiff[0] >= 239 and slot_minutesdiff[0] < 240) or (slot_minutesdiff[0] >= 14 and slot_minutesdiff[0] < 15):
-            message = ":trumpet: LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
-            context.bot.send_message(job.context, text=message)
-        
-        if (slot_minutesdiff[0] >= 1 and slot_minutesdiff[0] < 2):
-            message = ":drum: LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
-            context.bot.send_message(job.context, text=message)
+            if (slot_minutesdiff[0] >= 59 and slot_minutesdiff[0] < 60) or (slot_minutesdiff[0] >= 239 and slot_minutesdiff[0] < 240) or (slot_minutesdiff[0] >= 14 and slot_minutesdiff[0] < 15):
+                message = ":trumpet: LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+                context.bot.send_message(job.context, text=message)
+            
+            if (slot_minutesdiff[0] >= 1 and slot_minutesdiff[0] < 2):
+                message = ":drum: LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+                context.bot.send_message(job.context, text=message)
 
     con.close()
 
@@ -60,15 +60,24 @@ def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
         job.schedule_removal()
     return True
 
-def set_notifications(update: Update, context: CallbackContext) -> None:
+# store chat ids with notification status to prevent resubscribing at every restart
+def save_notification_status(chat_id, status): 
+    con = sqlite3.connect(CONFIG["localdb_path"])
+    try: 
+        con.execute("INSERT INTO user_chats VALUES ({0},{1})".format(chat_id,int(status)))
+    except sqlite3.IntegrityError:
+        con.execute("UPDATE user_chats SET notifications = {1} WHERE chat_id = {0}".format(chat_id,int(status)))
+    con.commit()
+    con.close()
+
+def enable_notifications(update: Update, context: CallbackContext) -> None:
     """Add a job to the queue."""
     chat_id = update.message.chat_id
+    save_notification_status(chat_id,True)
     try:
         job_removed = remove_job_if_exists(str(chat_id), context)
-        #run once immediatly to evaluate any block coming up soon
-        context.job_queue.run_once(block_alarm, 5, context=chat_id, name=str(chat_id))
-        #run repeating job every hour
-        context.job_queue.run_repeating(block_alarm, 3600, context=chat_id, name=str(chat_id))
+        #run repeating job every 10s
+        context.job_queue.run_repeating(block_alarm, 10, context=chat_id, name=str(chat_id))
         text = 'Block minting notification activated!'
         update.message.reply_text(text)
 
@@ -77,6 +86,7 @@ def set_notifications(update: Update, context: CallbackContext) -> None:
 
 def disable_notifications(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
+    save_notification_status(chat_id,False)
     job_removed = remove_job_if_exists(str(chat_id), context)
     text = 'Block notifications disabled!' if job_removed else 'You have no active block notifications.'
     update.message.reply_text(text)
@@ -88,18 +98,33 @@ def leaderlog(update: Update, context: CallbackContext) -> None:
     update.message.reply_text("Epoch: " + str(query_result[0][0]) +" | Slots: " + str(query_result[0][1]))
     con.close()
 
-def main() -> None:
-    # Setup internal SQLite database if needed
+# Setup internal SQLite database if needed
+def create_localdb():
     con = sqlite3.connect(CONFIG["localdb_path"])
     con.execute("CREATE TABLE IF NOT EXISTS user_chats (chat_id INTEGER PRIMARY KEY AUTOINCREMENT, notifications INTEGER NOT NULL)")
-    con.close() 
+    con.close()
 
-    """Run bot."""
+def restore_notifications(updater):
+    # enable notifications for saved users
+    con = sqlite3.connect(CONFIG["localdb_path"])
+    try: 
+        result = con.execute("select chat_id from user_chats where notifications = 1").fetchall()
+        for row in result:
+            updater.job_queue.run_repeating(block_alarm, 60, context=row[0], name=str(row[0]))
+    except Exception:
+        pass
+    finally:
+        con.close()
+
+def main() -> None:
+    create_localdb()
+
     # Setup the Bot
     token = CONFIG["tgbot_token"]
     updater = Updater(token)
+    restore_notifications(updater)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("start", set_notifications))
+    dispatcher.add_handler(CommandHandler("enable", enable_notifications))
     dispatcher.add_handler(CommandHandler("disable", disable_notifications))
     dispatcher.add_handler(CommandHandler("leaderlog", leaderlog))
 
