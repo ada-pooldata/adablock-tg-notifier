@@ -2,4 +2,4 @@ localdb_path: "adablock.db"
 cnclidb_path: "cncli.db"
 tgbot_token: "your-telegram:token-here"
 log_path: "adablock-tg-notifier.log"
-notification_range: [120, 60, 30, 15, 1]
+notification_minutes: [180, 90, 45, 15, 1]
