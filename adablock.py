@@ -110,12 +110,12 @@ def nextslot(update: Update, context: CallbackContext) -> None:
         slot_datetime = datetime.fromtimestamp(1596491091 + (slot - 4924800))
         slot_timediff =  slot_datetime - datetime.now()
 
-        if slot_timediff.total_seconds < 0:
+        if int(slot_timediff.total_seconds) < 0:
             continue
-        if slot_timediff.total_seconds > 0:
+        if int(slot_timediff.total_seconds) > 0:
             slot_datetime_str = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
             slot_timediff_str = str(slot_timediff.days) + "d:" + str(slot_timediff.hour) + "h:" + str(slot_timediff.minute) + "m:" + str(slot_timediff.second) + "s"
-            update.message.reply_text("Next Slot Scheduled: #" + str(slot) + "\n - on: " + slot_datetime_str +"\n- countdown: " + slot_timediff_str )
+            update.message.reply_text("\xF0\x9F\x8E\xBA Next Slot Scheduled: #" + str(slot) + "\n - on: " + slot_datetime_str +"\n- countdown: " + slot_timediff_str )
             break
 
     con.close()
