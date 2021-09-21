@@ -41,8 +41,12 @@ def block_alarm(context: CallbackContext) -> None:
         slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
         slot_stringdiff = ("{0}m {1}s").format(str(round(slot_minutesdiff[0])).rstrip('0').rstrip('.'),str(round(slot_minutesdiff[1])).rstrip('0').rstrip('.'))
 
-        if slot_minutesdiff[0] > 0 and slot_minutesdiff[0] <= 240:
-            message = "LEADERLOG \n slot scheduled on {0} \n countdown: {1}".format(slot_datestring, slot_stringdiff)
+        if (slot_minutesdiff[0] >= 59 and slot_minutesdiff[0] < 60) or (slot_minutesdiff[0] >= 239 and slot_minutesdiff[0] < 240) or (slot_minutesdiff[0] >= 14 and slot_minutesdiff[0] < 15):
+            message = ":trumpet: LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+            context.bot.send_message(job.context, text=message)
+        
+        if (slot_minutesdiff[0] >= 1 and slot_minutesdiff[0] < 2):
+            message = ":drum: LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
             context.bot.send_message(job.context, text=message)
 
     con.close()
@@ -56,7 +60,7 @@ def remove_job_if_exists(name: str, context: CallbackContext) -> bool:
         job.schedule_removal()
     return True
 
-def set_timer(update: Update, context: CallbackContext) -> None:
+def set_notifications(update: Update, context: CallbackContext) -> None:
     """Add a job to the queue."""
     chat_id = update.message.chat_id
     try:
@@ -71,7 +75,7 @@ def set_timer(update: Update, context: CallbackContext) -> None:
     except (IndexError, ValueError):
         update.message.reply_text('Error setting up block notifications')
 
-def unset(update: Update, context: CallbackContext) -> None:
+def disable_notifications(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     job_removed = remove_job_if_exists(str(chat_id), context)
     text = 'Block notifications disabled!' if job_removed else 'You have no active block notifications.'
@@ -85,13 +89,18 @@ def leaderlog(update: Update, context: CallbackContext) -> None:
     con.close()
 
 def main() -> None:
+    # Setup internal SQLite database if needed
+    con = sqlite3.connect(CONFIG["localdb_path"])
+    con.execute("CREATE TABLE IF NOT EXISTS user_chats (chat_id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id INTEGER ")
+    con.close() 
+
     """Run bot."""
     # Setup the Bot
     token = CONFIG["tgbot_token"]
     updater = Updater(token)
     dispatcher = updater.dispatcher
-    dispatcher.add_handler(CommandHandler("start", set_timer))
-    dispatcher.add_handler(CommandHandler("disable", unset))
+    dispatcher.add_handler(CommandHandler("start", set_notifications))
+    dispatcher.add_handler(CommandHandler("disable", disable_notifications))
     dispatcher.add_handler(CommandHandler("leaderlog", leaderlog))
 
     # Start the Bot
