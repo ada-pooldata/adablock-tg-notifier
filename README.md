@@ -1,5 +1,5 @@
 # adablock-tg-notifier
-Telegram bot to notify and check interactively slot leadership of a Cardano staking pool.
+Telegram bot to notify and check interactively the slot leader log of a Cardano staking pool.
 
 ## Installation
 ### Requirements:
