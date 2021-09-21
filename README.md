@@ -29,6 +29,15 @@ Once done, you can then run the script adablock.py by typing:
     
 You can run it in a screen session, or set it up as a service, to have it running in the background. Will be writing a dockerfile and a bash script to install as a service as soon as possible.
 
+## Usage
+
+The following commands are available: 
+
+- **enable**: enables notifications for leader slots
+- **disable**: disables notifications for leader slots
+- **nextslot**: shows information on the next leader slot assigned to your pool
+- **leaderlog**: shows the number of leader slots assigned in the last available epoch
+
 ## Todo
 
 - filter for valid chat ids (to prevent people from using your bot and retrieving leader slot timestamps)
