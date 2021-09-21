@@ -94,8 +94,30 @@ def disable_notifications(update: Update, context: CallbackContext) -> None:
 def leaderlog(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     con = sqlite3.connect(CONFIG["cnclidb_path"])
-    query_result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 1 ").fetchall()
-    update.message.reply_text("Epoch: " + str(query_result[0][0]) +" | Slots: " + str(query_result[0][1]))
+    result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 1 ").fetchall()
+    update.message.reply_text("Epoch: " + str(result[0][0]) +" | Slots: " + str(result[0][1]))
+    con.close()
+
+def nextslot(update: Update, context: CallbackContext) -> None:
+    chat_id = update.message.chat_id
+    con = sqlite3.connect(CONFIG["cnclidb_path"])
+    result = con.execute("select slots from slots order by epoch desc limit 2 ").fetchall()
+    slot_list = []
+    for row in result:
+        slot_list = slot_list + ast.literal_eval(row[0])
+
+    for slot in sorted(slot_list):
+        slot_datetime = datetime.fromtimestamp(1596491091 + (slot - 4924800))
+        slot_timediff =  slot_datetime - datetime.now()
+
+        if slot_timediff.total_seconds < 0:
+            continue
+        if slot_timediff.total_seconds > 0:
+            slot_datetime_str = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
+            slot_timediff_str = str(slot_timediff.days) + "d:" + str(slot_timediff.hour) + "h:" + str(slot_timediff.minute) + "m:" + str(slot_timediff.second) + "s"
+            update.message.reply_text("Next Slot Scheduled: #" + str(slot) + "\n - on: " + slot_datetime_str +"\n- countdown: " + slot_timediff_str )
+            break
+
     con.close()
 
 # Setup internal SQLite database if needed
@@ -125,8 +147,10 @@ def main() -> None:
     restore_notifications(updater)
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CommandHandler("enable", enable_notifications))
+    dispatcher.add_handler(CommandHandler("start", enable_notifications))
     dispatcher.add_handler(CommandHandler("disable", disable_notifications))
     dispatcher.add_handler(CommandHandler("leaderlog", leaderlog))
+    dispatcher.add_handler(CommandHandler("nextslot", nextslot))
 
     # Start the Bot
     updater.start_polling()
