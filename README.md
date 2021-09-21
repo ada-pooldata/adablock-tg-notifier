@@ -23,6 +23,10 @@ After this, edit the config.yaml file. The following options need to be set
 -  **log_path**:  path to the log files. can be left default or you can set a folder. The log is rotating on a daily basis, only 10 days of log are kept.
 -   **notification_minutes**: an array representing when you will be receiving notifications about a leader slot, in minutes. Default is *[180, 90, 45, 15, 1]* - which means you will receive a notification 180 minutes before, 90 minutes before, etc....
     
+Once done, you can then run the script adablock.py by typing:
+    python3 adablock.py
+    
+You can run it in a screen session, or set it up as a service, to have it running in the background. Will be writing a dockerfile and a bash script to install as a service as soon as possible.
 
 ## Todo
 
