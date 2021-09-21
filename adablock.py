@@ -41,12 +41,12 @@ def block_alarm(context: CallbackContext) -> None:
             slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
             slot_stringdiff = ("{0}m {1}s").format(str(round(slot_minutesdiff[0])).rstrip('0').rstrip('.'),str(round(slot_minutesdiff[1])).rstrip('0').rstrip('.'))
 
-            if (slot_minutesdiff[0] >= 59 and slot_minutesdiff[0] < 60) or (slot_minutesdiff[0] >= 239 and slot_minutesdiff[0] < 240) or (slot_minutesdiff[0] >= 14 and slot_minutesdiff[0] < 15):
-                message = ":trumpet: LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+            if (slot_minutesdiff[0] >= 59 and slot_minutesdiff[0] < 60) or (slot_minutesdiff[0] >= 119 and slot_minutesdiff[0] < 120) or (slot_minutesdiff[0] >= 29 and slot_minutesdiff[0] < 30):
+                message = "\xF0\x9F\x8E\xBA LEADERLOG \n- slot scheduled on {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
                 context.bot.send_message(job.context, text=message)
             
             if (slot_minutesdiff[0] >= 1 and slot_minutesdiff[0] < 2):
-                message = ":drum: LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
+                message = "\xF0\x9F\x8E\xAF LEADERLOG \n- it's MINTING TIME! {0} \n- countdown: {1}".format(slot_datestring, slot_stringdiff)
                 context.bot.send_message(job.context, text=message)
 
     con.close()
@@ -77,7 +77,7 @@ def enable_notifications(update: Update, context: CallbackContext) -> None:
     try:
         job_removed = remove_job_if_exists(str(chat_id), context)
         #run repeating job every 10s
-        context.job_queue.run_repeating(block_alarm, 10, context=chat_id, name=str(chat_id))
+        context.job_queue.run_repeating(block_alarm, 60, context=chat_id, name=str(chat_id))
         text = 'Block minting notification activated!'
         update.message.reply_text(text)
 
