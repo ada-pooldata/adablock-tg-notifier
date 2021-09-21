@@ -91,7 +91,7 @@ def leaderlog(update: Update, context: CallbackContext) -> None:
 def main() -> None:
     # Setup internal SQLite database if needed
     con = sqlite3.connect(CONFIG["localdb_path"])
-    con.execute("CREATE TABLE IF NOT EXISTS user_chats (chat_id INTEGER PRIMARY KEY AUTOINCREMENT, chat_id INTEGER ")
+    con.execute("CREATE TABLE IF NOT EXISTS user_chats (chat_id INTEGER PRIMARY KEY AUTOINCREMENT, notifications INTEGER NOT NULL)")
     con.close() 
 
     """Run bot."""
