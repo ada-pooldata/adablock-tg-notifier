@@ -42,13 +42,13 @@ def block_alarm(context: CallbackContext) -> None:
         for slot in ast.literal_eval(row[2]):
             slot_time_sec = 1596491091 + (slot - 4924800) #convert slot# to timestamp in seconds
             slot_datetime = datetime.fromtimestamp(slot_time_sec)
-            slot_datestring = slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")
+            slot_datestring = slot_datetime.strftime("%A, %B %d, %Y %H:%M:%S")
             slot_timediff =  slot_datetime - datetime.now()
             slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
             slot_stringdiff = str(slot_timediff)
 
             if check_notification_range(slot_minutesdiff[0]):
-                message = "LEADERLOG - slot: {0} \n- slot scheduled on {1} \n- countdown: {2}".format(str(slot), slot_datestring, slot_stringdiff)
+                message = "LEADERLOG - slot: {0} \n- slot scheduled on {1} CET\n- countdown: {2}".format(str(slot), slot_datestring, slot_stringdiff)
                 context.bot.send_message(job.context, text=message)
 
     con.close()
