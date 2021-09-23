@@ -115,7 +115,7 @@ def nextslot(update: Update, context: CallbackContext) -> None:
         if slot_timediff.total_seconds() < 0:
             continue
         if slot_timediff.total_seconds() > 0:
-            update.message.reply_text("Next Slot Scheduled: #{0}""\n- on: {1}\n- countdown: {2}".format(str(slot),str(slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")),str(slot_timediff)))
+            update.message.reply_text("Next Slot Scheduled: #{0}""\n- on: {1} CET\n- countdown: {2}".format(str(slot),str(slot_datetime.strftime("%A, %B %d, %Y %H:%M:%S")),str(slot_timediff)))
             break
 
     con.close()
