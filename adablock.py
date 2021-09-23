@@ -105,19 +105,17 @@ def nextslot(update: Update, context: CallbackContext) -> None:
     con = sqlite3.connect(CONFIG["cnclidb_path"])
     result = con.execute("select slots from slots order by epoch desc limit 2").fetchall() # always check 2 epochs in case leaderlog already ran
     slot_list = []
+
     for row in result:
         slot_list = slot_list + ast.literal_eval(row[0])
 
     for slot in sorted(slot_list):
         slot_datetime = datetime.fromtimestamp(1596491091 + (slot - 4924800))
         slot_timediff =  slot_datetime - datetime.now()
-
         if slot_timediff.total_seconds() < 0:
             continue
         if slot_timediff.total_seconds() > 0:
-            update.message.reply_text("Next Slot Scheduled: #" + str(slot) / 
-                + "\n- on: " + slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S") / 
-                + "\n- countdown: " + str(slot_timediff))
+            update.message.reply_text("Next Slot Scheduled: #{0}""\n- on: {1}\n- countdown: {2}".format(str(slot),str(slot_datetime.strftime("%A, %B %d, %Y %I:%M:%S")),str(slot_timediff)))
             break
 
     con.close()
