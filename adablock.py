@@ -109,6 +109,9 @@ def nextslot(update: Update, context: CallbackContext) -> None:
     for row in result:
         slot_list = slot_list + ast.literal_eval(row[0])
 
+    if slot_list == []:
+        update.message.reply_text("There are no slots scheduled - try again after next leaderlog!")
+
     for slot in sorted(slot_list):
         slot_datetime = datetime.fromtimestamp(1596491091 + (slot - 4924800))
         slot_timediff =  slot_datetime - datetime.now()
