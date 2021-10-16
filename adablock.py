@@ -101,17 +101,16 @@ def leaderlog(update: Update, context: CallbackContext) -> None:
     con.close()
 
 def nextslot(update: Update, context: CallbackContext) -> None:
-    chat_id = update.message.chat_id
+
     con = sqlite3.connect(CONFIG["cnclidb_path"])
     result = con.execute("select slots from slots order by epoch desc limit 2").fetchall() # always check 2 epochs in case leaderlog already ran
+    con.close()
     slot_list = []
-
     for row in result:
         slot_list = slot_list + ast.literal_eval(row[0])
 
-    if slot_list == []:
-        update.message.reply_text("There are no slots scheduled - try again after next leaderlog!")
-
+    msgcount = 0
+    
     for slot in sorted(slot_list):
         slot_datetime = datetime.fromtimestamp(1596491091 + (slot - 4924800))
         slot_timediff =  slot_datetime - datetime.now()
@@ -119,9 +118,12 @@ def nextslot(update: Update, context: CallbackContext) -> None:
             continue
         if slot_timediff.total_seconds() > 0:
             update.message.reply_text("Next Slot Scheduled: #{0}""\n- on: {1} CET\n- countdown: {2}".format(str(slot),str(slot_datetime.strftime("%A, %B %d, %Y %H:%M:%S")),str(slot_timediff)))
+            msgcount = msgcount + 1
             break
 
-    con.close()
+    if msgcount == 0:
+        update.message.reply_text("There are no slots scheduled - try again after next leaderlog!")
+    
 
 # Setup internal SQLite database if needed
 def create_localdb():
