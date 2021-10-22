@@ -20,8 +20,9 @@ After this, edit the config.yaml file. The following options need to be set
 - **localdb_path**: path to a local db that will store chat ids with notification option selected. Can be left to default.
 - **cnclidb_path**: path to the CNCLI SQLite database. If you are running your node through cntools, this will be in */opt/cardano/cnode/guild-db/cncli/cncli.db*
 - **tgbot_token**:  the telegram token for your bot. Follow the instructions on how to use BotFather on telegram https://core.telegram.org/bots#6-botfather to create your bot and retrieve the token
--  **log_path**:  path to the log files. can be left default or you can set a folder. The log is rotating on a daily basis, only 10 days of log are kept.
--   **notification_minutes**: an array representing when you will be receiving notifications about a leader slot, in minutes. Default is *[180, 90, 45, 15, 1]* - which means you will receive a notification 180 minutes before, 90 minutes before, etc....
+- **log_path**:  path to the log files. can be left default or you can set a folder. The log is rotating on a daily basis, only 10 days of log are kept.
+- **notification_minutes**: an array representing when you will be receiving notifications about a leader slot, in minutes. Default is *[180, 90, 45, 15, 1]* - which means you will receive a notification 180 minutes before, 90 minutes before, etc....
+- **slot_time_format**: the default string format for the datetime used in notification messages. Default is "%a %d-%m-%Y %H:%M:%S" (e.g. Sun 25-10-2021 10:00:03)
     
 Once done, you can then run the script adablock.py by typing:
 
