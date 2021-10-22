@@ -97,8 +97,13 @@ def leaderlog(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     con = sqlite3.connect(CONFIG["cnclidb_path"])
     result = con.execute("select epoch, slot_qty, slots from slots order by epoch desc limit 1 ").fetchall()
-    update.message.reply_text("Epoch: " + str(result[0][0]) +" | Slots: " + str(result[0][1]))
+    update.message.reply_text("Epoch: " + str(result[0][0]) +" | Slots: " + str(result[0][1])) # overall nr. of slots (for forwarding)
+    msg = "" # detailed message
+    for slot in sorted(ast.literal_eval(result[0][2])):
+        slot_datetime = datetime.fromtimestamp(1596491091 + (slot - 4924800))
+        msg = msg + "\n- Slot: {0} | On: {1}".format(str(slot),str(slot_datetime.strftime("%A, %B %d, %Y %H:%M:%S"))) # overall nr. of slots (for forwarding)
     con.close()
+    update.message.reply_text(msg)
 
 def nextslot(update: Update, context: CallbackContext) -> None:
 
