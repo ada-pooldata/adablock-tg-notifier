@@ -18,8 +18,8 @@ CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.y
 CONFIG = yaml.load(open(CONFIG_PATH), Loader=yaml.FullLoader)
 
 # Setup logging
-formatter = logging.Formatter(f'%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
-handler = TimedRotatingFileHandler(CONFIG['log_path'], when='midnight', backupCount=10)
+formatter = logging.Formatter(f"%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s")
+handler = TimedRotatingFileHandler(CONFIG["log_path"], when="midnight", backupCount=10)
 handler.setFormatter(formatter)
 logger = logging.getLogger(__name__)
 logger.addHandler(handler)
@@ -42,7 +42,7 @@ def block_alarm(context: CallbackContext) -> None:
         for slot in ast.literal_eval(row[2]):
             slot_time_sec = 1596491091 + (slot - 4924800) #convert slot# to timestamp in seconds
             slot_datetime = datetime.fromtimestamp(slot_time_sec)
-            slot_datestring = slot_datetime.strftime("%A, %B %d, %Y %H:%M:%S")
+            slot_datestring = slot_datetime.strftime(CONFIG["slot_time_format"])
             slot_timediff =  slot_datetime - datetime.now()
             slot_minutesdiff = divmod(slot_timediff.total_seconds(), 60) 
             slot_stringdiff = str(slot_timediff)
@@ -80,17 +80,17 @@ def enable_notifications(update: Update, context: CallbackContext) -> None:
         job_removed = remove_job_if_exists(str(chat_id), context)
         #run repeating job every 10s
         context.job_queue.run_repeating(block_alarm, 60, context=chat_id, name=str(chat_id))
-        text = 'Block minting notification activated!'
+        text = "Block minting notification activated!"
         update.message.reply_text(text)
 
     except (IndexError, ValueError):
-        update.message.reply_text('Error setting up block notifications')
+        update.message.reply_text("Error setting up block notifications")
 
 def disable_notifications(update: Update, context: CallbackContext) -> None:
     chat_id = update.message.chat_id
     save_notification_status(chat_id,False)
     job_removed = remove_job_if_exists(str(chat_id), context)
-    text = 'Block notifications disabled!' if job_removed else 'You have no active block notifications.'
+    text = "Block notifications disabled!" if job_removed else "You have no active block notifications."
     update.message.reply_text(text)
 
 def leaderlog(update: Update, context: CallbackContext) -> None:
@@ -101,7 +101,7 @@ def leaderlog(update: Update, context: CallbackContext) -> None:
     msg = "" # detailed message
     for slot in sorted(ast.literal_eval(result[0][2])):
         slot_datetime = datetime.fromtimestamp(1596491091 + (slot - 4924800))
-        msg = msg + "\n- Slot: {0} | On: {1}".format(str(slot),str(slot_datetime.strftime("%A, %B %d, %Y %H:%M:%S"))) # overall nr. of slots (for forwarding)
+        msg = msg + "\n- Slot: {0} | On: {1}".format(str(slot),str(slot_datetime.strftime(CONFIG["slot_time_format"]))) # overall nr. of slots (for forwarding)
     con.close()
     update.message.reply_text(msg)
 
@@ -122,7 +122,7 @@ def nextslot(update: Update, context: CallbackContext) -> None:
         if slot_timediff.total_seconds() < 0:
             continue
         if slot_timediff.total_seconds() > 0:
-            update.message.reply_text("Next Slot Scheduled: #{0}""\n- on: {1} CET\n- countdown: {2}".format(str(slot),str(slot_datetime.strftime("%A, %B %d, %Y %H:%M:%S")),str(slot_timediff)))
+            update.message.reply_text("Next Slot Scheduled: #{0}""\n- on: {1} CET\n- countdown: {2}".format(str(slot),str(slot_datetime.strftime(CONFIG["slot_time_format"])),str(slot_timediff)))
             msgcount = msgcount + 1
             break
 
@@ -166,5 +166,5 @@ def main() -> None:
     updater.start_polling()
     updater.idle()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

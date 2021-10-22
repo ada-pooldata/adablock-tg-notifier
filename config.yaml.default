@@ -3,3 +3,4 @@ cnclidb_path: "cncli.db"
 tgbot_token: "your-telegram:token-here"
 log_path: "adablock-tg-notifier.log"
 notification_minutes: [180, 90, 45, 15, 1]
+slot_time_format: "%a %d-%m-%Y %H:%M:%S"
